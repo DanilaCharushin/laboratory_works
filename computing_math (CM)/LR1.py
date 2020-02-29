@@ -1,145 +1,205 @@
-from random import *
-from math import *
+from scipy.optimize import root as ROOT
 import matplotlib.pyplot as plt
+import matplotlib.ticker as tic
+import numpy as np
 
 # x**3-x**2+2x+3=0
+# simpy - символьные вычисления
 
-a = -5
-b = 5
-eps = 0.0001
+A = -5
+B = 5
+ACCURACY = 0.0001
 
 
-def F(x):  # F(x)
+# F(x)
+def func(x):
     return x ** 3 - x ** 2 + 2 * x + 3
 
 
-def dF(x):  # F'(x)
+# F'(x)
+def d_func(x):
     return 3 * x ** 2 - 2 * x + 2
 
 
-def ddF(x):  # F''(x)
+# F''(x)
+def dd_func(x):
     return 6 * x - 2
 
 
-X = []
-Y = []
-dY = []
-ddY = []
-XN1 = []
-XN2 = []
-XN3 = []
-N1 = []
-N2 = []
-N3 = []
-x = a
-while x < b:
-    X.append(x)
-    Y.append(F(x))
-    dY.append(dF(x))
-    ddY.append(ddF(x))
-    x += eps
+X = np.linspace(A, B, int(1 / ACCURACY))
+Y = func(X)
+dY = d_func(X)
+ddY = dd_func(X)
 
-# считаем количество знаком после запятой-----------------------------------
-n = int(1 / eps)
-signs = 0
-while n > 9:
-    signs += 1
-    n //= 10
-# --------------------------------------------------------------------------
+X_HALF_DIVISION = []
+Y_HALF_DIVISION = []
+X_CHORD = []
+Y_CHORD = []
+X_TANGENT = []
+Y_TANGENT = []
 
-# метод половинного деления-------------------------------------------------
-i = 0
-while (b - a) > eps:
-    d = (a + b) / 2
-    XN1.append(d)
-    N1.append(i)
-    i += 1
-    if F(a) * F(d) < 0:
-        b = d
+
+def half_division_method(func, a, b, accuracy):
+    global X_HALF_DIVISION
+    global Y_HALF_DIVISION
+    i = 0
+    signs = str(accuracy).count('0')
+
+    while (b - a) / 2 > accuracy:
+        d = (a + b) / 2
+        X_HALF_DIVISION.append(i)
+        Y_HALF_DIVISION.append(d)
+        i += 1
+        if func(a) * func(d) < 0:
+            b = d
+        else:
+            a = d
+
+    root = round((a + b) / 2, signs)
+    error = round((b - a) / 2, signs + 1)
+
+    return {
+        "root": root,
+        "error": error,
+    }
+
+
+def chord_method(func, dd_func, a, b, accuracy):
+    global X_CHORD
+    global Y_CHORD
+    i = 0
+    signs = str(accuracy).count('0')
+    xn = 0
+    xnn = 0
+
+    if func(b) * dd_func(a) > 0:
+        xn = a
+        xnn = a
+        while True:
+            Y_CHORD.append(xn)
+            X_CHORD.append(i)
+            i += 1
+            xn = xnn
+            xnn = b - func(b) * (b - xn) / (func(b) - func(xn))
+            if abs(xnn - xn) < accuracy:
+                break
+    elif func(a) * dd_func(b) > 0:
+        xn = b
+        xnn = b
+        while True:
+            Y_CHORD.append(xn)
+            X_CHORD.append(i)
+            i += 1
+            xn = xnn
+            xnn = a - func(a) * (xn - a) / (func(xn) - func(a))
+            if abs(xnn - xn) < accuracy:
+                break
     else:
-        a = d
+        print("Can't solve by chord method")
 
-x = round((a + b) / 2, signs + 1)
-d_eps = round((b - a) / 2, signs + 1)
-print(f'Метод половинного делений: x = {x}, ошибка = {d_eps}')
-# ---------------------------------------------------------------------------
+    root = round(xnn, signs)
+    error = round(abs(xnn - xn), signs + 2)
+
+    return {
+        "root": root,
+        "error": error,
+    }
 
 
-# метод хорд-----------------------------------------------------------------
-xn = 0
-xnn = 0
-a = -2
-b = 0
-
-if F(b) * ddF(a) > 0:
-    xn = a
-    xnn = a
+def tangent_method(func, d_func, dd_func, a, b, accuracy):
+    global X_TANGENT
+    global Y_TANGENT
     i = 0
+    signs = str(accuracy).count('0')
+    xn = 0
+    xnn = 0
+
+    if func(b) * dd_func(a) > 0:
+        xn = b
+        xnn = b
+    elif func(a) * dd_func(b) > 0:
+        xn = a
+        xnn = a
+    else:
+        print("Can't solve by tangent method")
+
     while True:
-        XN2.append(xn)
-        N2.append(i)
+        X_TANGENT.append(i)
+        Y_TANGENT.append(xn)
         i += 1
         xn = xnn
-        xnn = b - F(b) * (b - xn) / (F(b) - F(xn))
-        if abs(xnn - xn) < eps:
+        xnn = xn - func(xn) / d_func(xn)
+        if abs(xnn - xn) < accuracy:
             break
-elif F(a) * ddF(b) > 0:
-    xn = b
-    xnn = b
-    i = 0
-    while True:
-        XN2.append(xn)
-        N2.append(i)
-        i += 1
-        xn = xnn
-        xnn = a - F(a) * (xn - a) / (F(xn) - F(a))
-        if abs(xnn - xn) < eps:
-            break
-else:
-    print("Не могу решить уравнение методом хорд")
 
-x = round(xnn, signs)
-d_eps = round(abs(xnn - xn), signs + 1)
-print(f'Метод хорд: x = {x}, ошибка = {d_eps}')
-# ---------------------------------------------------------------------------
+    root = round(xnn, signs)
+    error = round(abs(xnn - xn), signs + 1)
+
+    return {
+        "root": root,
+        "error": error,
+    }
 
 
-# метод касательных----------------------------------------------------------
-xn = 0
-xnn = 0
-a = -2
-b = 0
+# считаем количество знаком после запятой
 
-if F(b) * ddF(a) > 0:
-    xn = b
-    xnn = b
-elif F(a) * ddF(b) > 0:
-    xn = a
-    xnn = a
-else:
-    print("Не могу решить уравнение методом касательных")
+print("=========================================")
+print("METHODS:")
 
-i = 0
-while True:
-    XN3.append(xn)
-    N3.append(i)
-    i += 1
-    xn = xnn
-    xnn = xn - F(xn) / dF(xn)
-    if abs(xnn - xn) < eps:
-        break
+# solving by half division method
+# ===========================================================================
+solution_half_division = half_division_method(func, A, B, ACCURACY)
+root = solution_half_division["root"]
+error = solution_half_division["error"]
+print(f'Half division: root = {root}, error = {error}')
+# ===========================================================================
 
-x = round(xnn, signs)
-d_eps = round(abs(xnn - xn), signs + 1)
-print(f'Метод касательных: x = {x}, ошибка = {d_eps}')
-# ---------------------------------------------------------------------------
+# solving by chord method
+# ===========================================================================
+solution_chord_method = chord_method(func, dd_func, -2, 0, ACCURACY)
+root = solution_chord_method["root"]
+error = solution_chord_method["error"]
+print(f'Chord method: root = {root}, error = {error}')
+# ===========================================================================
 
-""" 
-plt.plot(N1, XN1)
-plt.plot(N2, XN2)
-plt.plot(N3, XN3)
-"""
-plt.plot(X, Y)
-plt.plot(X, dY)
-plt.plot(X, ddY)
+# solving by tangent method
+# ===========================================================================
+solution_tangent_method = tangent_method(func, d_func, dd_func, -2, 0, ACCURACY)
+root = solution_tangent_method["root"]
+error = solution_tangent_method["error"]
+print(f'Tangent method: root = {root}, error = {error}')
+# ===========================================================================
+
+print("=========================================")
+print("SCIPY.OPTIMIZE.ROOT:")
+solution = ROOT(func, 0)
+root = round(solution.x[0], str(ACCURACY).count('0'))
+print(root)
+print("=========================================")
+
+
+fig, ax = plt.subplots()
+
+plt.title("METHOD COMPARISON")
+plt.xlabel("count of iterations")
+plt.ylabel("inaccuracy")
+ax.xaxis.set_major_locator(tic.MultipleLocator(1))
+ax.plot(
+    X_HALF_DIVISION, Y_HALF_DIVISION,
+    'o-b', lw=1, mec='b', ms=3,
+    label="half division method"
+)
+ax.plot(
+    X_CHORD, Y_CHORD,
+    'o-r', lw=1, mec='r', ms=3,
+    label="chord method"
+)
+ax.plot(
+    X_TANGENT, Y_TANGENT,
+    'o-g', lw=1, mec='g', ms=3,
+    label="tangent method"
+)
+ax.hlines(root, 0, len(X_HALF_DIVISION), label="root")
+ax.grid(True)
+ax.legend()
 plt.show()
