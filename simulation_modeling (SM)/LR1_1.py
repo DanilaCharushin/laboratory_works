@@ -31,14 +31,29 @@ T = []
 x = []
 dx = []
 dxm = []
+print("┌─────┬────────────┬─────────────┬──────────────┐")
+print("|  t  |    X(t)    |    dX(t)    |    dXm(t)    |")
+print("├─────┼────────────┼─────────────┼──────────────┤")
 for i in range(N):
     t = i * dt
     T.append(t)
     x.append(X(t))
     dx.append(dX(t))
     dxm.append(dXm(t))
+    print("|" + str(round(t, 2)).center(5), end='')
+    print("|" + str(round(X(t), 5)).center(12), end='')
+    print("|" + str(round(dX(t), 5)).center(13), end='')
+    print("|" + str(round(dXm(t), 5)).center(14) + "|")
 
-plt.plot(T, x)
-plt.plot(T, dx)
-plt.plot(T, dxm)
+
+fig, ax = plt.subplots()
+plt.title("DIFF. FILTER FUNCTION")
+plt.xlabel("X")
+plt.ylabel("Y")
+
+ax.plot(T, x, "-r", label="X(t)")
+ax.plot(T, dx, '-g', lw=5, label="dX(t)")
+ax.plot(T, dxm, "-y", label="dXm(t)")
+ax.grid(True)
+ax.legend()
 plt.show()
