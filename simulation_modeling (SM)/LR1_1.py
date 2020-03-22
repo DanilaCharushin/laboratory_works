@@ -34,6 +34,7 @@ dxm = []
 print("┌─────┬────────────┬─────────────┬──────────────┐")
 print("|  t  |    X(t)    |    dX(t)    |    dXm(t)    |")
 print("├─────┼────────────┼─────────────┼──────────────┤")
+avg = 0
 for i in range(N):
     t = i * dt
     T.append(t)
@@ -44,7 +45,10 @@ for i in range(N):
     print("|" + str(round(X(t), 5)).center(12), end='')
     print("|" + str(round(dX(t), 5)).center(13), end='')
     print("|" + str(round(dXm(t), 5)).center(14) + "|")
+    avg += abs(round(dX(t), 5) - round(dXm(t), 5))
 
+avg /= N
+print (f'avg = {round(avg, 5)}')
 
 fig, ax = plt.subplots()
 plt.title("DIFF. FILTER FUNCTION")
