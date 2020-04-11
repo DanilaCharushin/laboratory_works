@@ -3,6 +3,9 @@ import warnings
 from math import isnan, factorial
 
 
+# контрольные суммы гаусс
+# точность
+
 # VARIANT 2
 # Kramer, Gauss, Seidel
 # 9x1  + 14х2 - 15х3 + 23х4 = 5
@@ -53,16 +56,24 @@ class LinearSystemsSolver(object):
             raise DimensionError
         x = np.transpose(np.append(np.transpose(A), [b], axis=0))
         n = len(x)
+        s = np.array([sum(x[i][j] for j in range(n+1)) for i in range(n)], dtype=np.float64)
+        current_s = np.copy(s)
         count = 0
         for i in range(n):
             if x[i][i] != 0:
                 x[i] = x[i] / x[i][i]
+                current_s[i] = current_s[i] / x[i][i]
                 count += n
                 for j in range(i + 1, n):
                     if x[j][i] != 0:
                         k = (-x[j][i])
                         x[j] = x[j] + k * x[i]
+                        current_s[j] = current_s[j] + k * current_s[j]
                         count += (2 * n)
+        for i in range(n):
+            s[i] = sum(x[i][j] for j in range(n+1))
+        print(s)
+        print(current_s)
         for i in range(n):
             for j in range(n - i - 2, -1, -1):
                 k = (-x[j][n - i - 1]) * x[n - i - 1]
