@@ -1,8 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import random as rand
-import scipy.stats as st
-import scipy.signal as ss
+import scipy.interpolate as interp
 
 e = 2.718281828
 pi = 3.1415926
@@ -114,31 +112,40 @@ def main():
         err_rand_smooth5 = y - y_rand_smooth5
         err_rand_smooth7 = y - y_rand_smooth7
 
-        err_norm = np.array([
-            np.linalg.norm(err_noise),
-            np.linalg.norm(err_smooth3),
-            np.linalg.norm(err_smooth5),
-            np.linalg.norm(err_smooth7),
-            np.linalg.norm(err_rand_noise),
-            np.linalg.norm(err_rand_smooth3),
-            np.linalg.norm(err_rand_smooth5),
-            np.linalg.norm(err_rand_smooth7)],
-            dtype=np.float64
-        )
+        err_norm = [
+            {"norm": np.linalg.norm(err_noise), "type": "noise", "value": y_noisy},
+            {"norm": np.linalg.norm(err_smooth3), "type": "smooth3", "value": y_smooth3},
+            {"norm": np.linalg.norm(err_smooth5), "type": "smooth5", "value": y_smooth5},
+            {"norm": np.linalg.norm(err_smooth7), "type": "smooth7", "value": y_smooth7},
+            {"norm": np.linalg.norm(err_rand_noise), "type": "rand_noise", "value": y_rand_noisy},
+            {"norm": np.linalg.norm(err_rand_smooth3), "type": "rand_smooth3", "value": y_rand_smooth3},
+            {"norm": np.linalg.norm(err_rand_smooth5), "type": "rand_smooth5", "value": y_rand_smooth5},
+            {"norm": np.linalg.norm(err_rand_smooth7), "type": "rand_smooth7", "value": y_rand_smooth7}
+        ]
         print("======================================")
         print("==============ERROR NORM==============")
         print(f'n={n_fixed}, p={p}, law={law}')
         print("--------------------------------------")
-        print(f'       err_noise: {round(err_norm[0], 5)}')
-        print(f'     err_smooth3: {round(err_norm[1], 5)}')
-        print(f'     err_smooth5: {round(err_norm[2], 5)}')
-        print(f'     err_smooth7: {round(err_norm[3], 5)}')
-        print(f'  err_rand_noise: {round(err_norm[4], 5)}')
-        print(f'err_rand_smooth3: {round(err_norm[5], 5)}')
-        print(f'err_rand_smooth5: {round(err_norm[6], 5)}')
-        print(f'err_rand_smooth7: {round(err_norm[7], 5)}')
+        print(f'       err_noise: {round(err_norm[0]["norm"], 5)}')
+        print(f'     err_smooth3: {round(err_norm[1]["norm"], 5)}')
+        print(f'     err_smooth5: {round(err_norm[2]["norm"], 5)}')
+        print(f'     err_smooth7: {round(err_norm[3]["norm"], 5)}')
+        print(f'  err_rand_noise: {round(err_norm[4]["norm"], 5)}')
+        print(f'err_rand_smooth3: {round(err_norm[5]["norm"], 5)}')
+        print(f'err_rand_smooth5: {round(err_norm[6]["norm"], 5)}')
+        print(f'err_rand_smooth7: {round(err_norm[7]["norm"], 5)}')
         print("--------------------------------------")
-        print(f'min: {round(min(err_norm), 5)}')
+        data = err_norm[0]
+        for i in range(4):
+            if err_norm[i]["norm"] < data["norm"]:
+                data = err_norm[i]
+        data_rand = err_norm[4]
+        for i in range(4, 8):
+            if err_norm[i]["norm"] < data_rand["norm"]:
+                data_rand = err_norm[i]
+
+        print(f'     min: {data["type"]} ({round(data["norm"], 5)})')
+        print(f'min_rand: {data_rand["type"]} ({round(data_rand["norm"], 5)})')
 
         fig, ax = plt.subplots()
         fig_err, ax_err = plt.subplots()
@@ -203,9 +210,58 @@ def main():
         # =========================================================================
         # =================================PART 2==================================
         # =========================================================================
+        y_data = data["value"]
+        y_data_rand = data_rand["value"]
+        lg = interp.lagrange(x, y_data)
+        lg_rand = interp.lagrange(x_rand, y_data_rand)
+        Y_lg = lg(X)
+        Y_lg_rand = lg_rand(X)
+        lg_err = Y - Y_lg
+        lg_rand_err = Y - Y_lg_rand
 
+        print("======================================")
+        print("===============LAGRANGE===============")
 
+        fig_lg, ax_lg = plt.subplots()
+        fig_err_lg, ax_err_lg = plt.subplots()
+        fig_rand_lg, ax_rand_lg = plt.subplots()
+        fig_rand_err_lg, ax_rand_err_lg = plt.subplots()
 
+        ax_lg.plot(X, Y, '-r', lw="3", label="func")
+        ax_lg.plot(x, y, 'ob', ms="8", label="points")
+        ax_lg.plot(x, y_data, 'oc', ms="5", label="data")
+        ax_lg.plot(X, Y_lg, '-c', lw='1', label="lg")
+        ax_lg.set_title(f'lagrange, dx=const, n={n_fixed}, p={p}, law={law}')
+        ax_lg.set_xlabel("x")
+        ax_lg.set_ylabel("y = sin(x) / ln(x)")
+        ax_lg.legend()
+        ax_lg.grid()
+
+        ax_err_lg.axhline(0, c='r', label="func")
+        ax_err_lg.plot(X, lg_err, 'c', lw='2', label="noise")
+        ax_err_lg.set_title(f'lagrange err, dx=const, n={n_fixed}, p={p}, law={law}')
+        ax_err_lg.set_xlabel("x")
+        ax_err_lg.set_ylabel("y - lg(x)")
+        ax_err_lg.legend()
+        ax_err_lg.grid()
+
+        ax_rand_lg.plot(X, Y, '-r', lw="3", label="func")
+        ax_rand_lg.plot(x_rand, y_rand, 'ob', ms="8", label="points")
+        ax_rand_lg.plot(x_rand, y_data_rand, 'oc', ms="5", label="data")
+        ax_rand_lg.plot(X, lg_rand(X), '-c', lw='1', label="lg_rand")
+        ax_rand_lg.set_title(f'lagrange, dx=rand, n={n_fixed}, p={p}, law={law}')
+        ax_rand_lg.set_xlabel("x")
+        ax_rand_lg.set_ylabel("y = sin(x) / ln(x)")
+        ax_rand_lg.legend()
+        ax_rand_lg.grid()
+
+        ax_rand_err_lg.axhline(0, c='r', label="func")
+        ax_rand_err_lg.plot(X, lg_rand_err, 'c', lw='2', label="noise")
+        ax_rand_err_lg.set_title(f'lagrange err, dx=rand, n={n_fixed}, p={p}, law={law}')
+        ax_rand_err_lg.set_xlabel("x")
+        ax_rand_err_lg.set_ylabel("y - lg(x)")
+        ax_rand_err_lg.legend()
+        ax_rand_err_lg.grid()
 
         plt.show()
 
