@@ -214,54 +214,123 @@ def main():
         y_data_rand = data_rand["value"]
         lg = interp.lagrange(x, y_data)
         lg_rand = interp.lagrange(x_rand, y_data_rand)
+        lin = interp.interp1d(x, y_data, kind="linear")
+        lin_rand = interp.interp1d(x, y_data_rand, kind="linear")
+        quad = interp.interp1d(x, y_data, kind="quadratic")
+        quad_rand = interp.interp1d(x, y_data_rand, kind="quadratic")
+        cub = interp.interp1d(x, y_data, kind="cubic")
+        cub_rand = interp.interp1d(x, y_data_rand, kind="cubic")
+
         Y_lg = lg(X)
         Y_lg_rand = lg_rand(X)
+        Y_lin = lin(X)
+        Y_lin_rand = lin_rand(X)
+        Y_quad = quad(X)
+        Y_quad_rand = quad_rand(X)
+        Y_cub = cub(X)
+        Y_cub_rand = cub_rand(X)
+
         lg_err = Y - Y_lg
         lg_rand_err = Y - Y_lg_rand
+        lin_err = Y - Y_lin
+        lin_err_rand = Y - Y_lg_rand
+        quad_err = Y - Y_quad
+        quad_err_rand = Y - Y_quad_rand
+        cub_err = Y - Y_cub
+        cub_err_rand = Y - Y_cub_rand
 
-        print("======================================")
-        print("===============LAGRANGE===============")
+        print("===========================================")
+        print("============INTERPOLATION ERROR============")
 
-        fig_lg, ax_lg = plt.subplots()
-        fig_err_lg, ax_err_lg = plt.subplots()
-        fig_rand_lg, ax_rand_lg = plt.subplots()
-        fig_rand_err_lg, ax_rand_err_lg = plt.subplots()
+        err_norm = [
+            {"norm": np.linalg.norm(lg_err), "type": "lg"},
+            {"norm": np.linalg.norm(lin_err), "type": "lin"},
+            {"norm": np.linalg.norm(quad_err), "type": "quad"},
+            {"norm": np.linalg.norm(cub_err), "type": "cub"},
+            {"norm": np.linalg.norm(lg_rand_err), "type": "rand_lg"},
+            {"norm": np.linalg.norm(lin_err_rand), "type": "rand_lin"},
+            {"norm": np.linalg.norm(quad_err_rand), "type": "rand_quad"},
+            {"norm": np.linalg.norm(cub_err_rand), "type": "rand_cub"}
+        ]
+        print(f'n={n_fixed}, p={p}, law={law}')
+        print("--------------------------------------")
+        print(f'       lg_err: {round(err_norm[0]["norm"], 5)}')
+        print(f'      lin_err: {round(err_norm[1]["norm"], 5)}')
+        print(f'     quad_err: {round(err_norm[2]["norm"], 5)}')
+        print(f'      cub_err: {round(err_norm[3]["norm"], 5)}')
+        print(f'  lg_rand_err: {round(err_norm[4]["norm"], 5)}')
+        print(f' lin_err_rand: {round(err_norm[5]["norm"], 5)}')
+        print(f'quad_err_rand: {round(err_norm[6]["norm"], 5)}')
+        print(f' cub_err_rand: {round(err_norm[7]["norm"], 5)}')
+        print("--------------------------------------")
+        data = err_norm[0]
+        for i in range(4):
+            if err_norm[i]["norm"] < data["norm"]:
+                data = err_norm[i]
+        data_rand = err_norm[4]
+        for i in range(4, 8):
+            if err_norm[i]["norm"] < data_rand["norm"]:
+                data_rand = err_norm[i]
 
-        ax_lg.plot(X, Y, '-r', lw="3", label="func")
-        ax_lg.plot(x, y, 'ob', ms="8", label="points")
-        ax_lg.plot(x, y_data, 'oc', ms="5", label="data")
-        ax_lg.plot(X, Y_lg, '-c', lw='1', label="lg")
-        ax_lg.set_title(f'lagrange, dx=const, n={n_fixed}, p={p}, law={law}')
-        ax_lg.set_xlabel("x")
-        ax_lg.set_ylabel("y = sin(x) / ln(x)")
-        ax_lg.legend()
-        ax_lg.grid()
+        print(f'     min: {data["type"]} ({round(data["norm"], 5)})')
+        print(f'min_rand: {data_rand["type"]} ({round(data_rand["norm"], 5)})')
 
-        ax_err_lg.axhline(0, c='r', label="func")
-        ax_err_lg.plot(X, lg_err, 'c', lw='2', label="noise")
-        ax_err_lg.set_title(f'lagrange err, dx=const, n={n_fixed}, p={p}, law={law}')
-        ax_err_lg.set_xlabel("x")
-        ax_err_lg.set_ylabel("y - lg(x)")
-        ax_err_lg.legend()
-        ax_err_lg.grid()
+        h = 1
 
-        ax_rand_lg.plot(X, Y, '-r', lw="3", label="func")
-        ax_rand_lg.plot(x_rand, y_rand, 'ob', ms="8", label="points")
-        ax_rand_lg.plot(x_rand, y_data_rand, 'oc', ms="5", label="data")
-        ax_rand_lg.plot(X, lg_rand(X), '-c', lw='1', label="lg_rand")
-        ax_rand_lg.set_title(f'lagrange, dx=rand, n={n_fixed}, p={p}, law={law}')
-        ax_rand_lg.set_xlabel("x")
-        ax_rand_lg.set_ylabel("y = sin(x) / ln(x)")
-        ax_rand_lg.legend()
-        ax_rand_lg.grid()
+        fig_interp, ax_interp = plt.subplots()
+        fig_err_interp, ax_err_interp = plt.subplots()
+        fig_rand_interp, ax_rand_interp = plt.subplots()
+        fig_rand_err_interp, ax_rand_err_interp = plt.subplots()
 
-        ax_rand_err_lg.axhline(0, c='r', label="func")
-        ax_rand_err_lg.plot(X, lg_rand_err, 'c', lw='2', label="noise")
-        ax_rand_err_lg.set_title(f'lagrange err, dx=rand, n={n_fixed}, p={p}, law={law}')
-        ax_rand_err_lg.set_xlabel("x")
-        ax_rand_err_lg.set_ylabel("y - lg(x)")
-        ax_rand_err_lg.legend()
-        ax_rand_err_lg.grid()
+        ax_interp.plot(X, Y, '-r', lw="4", label="func")
+        ax_interp.plot(x, y, 'ob', ms="8", label="points")
+        ax_interp.plot(x, y_data, 'ok', ms="5", label="data")
+        ax_interp.plot(X, Y_lg, '--c', lw='2', label="lg")
+        ax_interp.plot(X, Y_lin, '--y', lw='2', label="lin")
+        ax_interp.plot(X, Y_quad, '--b', lw='2', label="quad")
+        ax_interp.plot(X, Y_cub, '--g', lw='2', label="cub")
+        ax_interp.set_title(f'func interp, dx=const, n={n_fixed}, p={p}, law={law}')
+        ax_interp.set_xlabel("x")
+        ax_interp.set_ylabel("y = sin(x) / ln(x)")
+        ax_interp.legend()
+        ax_interp.grid()
+
+        ax_err_interp.axhline(0, c='r', label="func")
+        ax_err_interp.plot(X, lg_err, 'c', lw='2', label="lg")
+        ax_err_interp.plot(X, lin_err, 'y', lw='2', label="ling")
+        ax_err_interp.plot(X, quad_err, 'b', lw='2', label="quad")
+        ax_err_interp.plot(X, cub_err, 'g', lw='2', label="cub")
+        ax_err_interp.set_title(f'interp err, dx=const, n={n_fixed}, p={p}, law={law}')
+        ax_err_interp.set_xlabel("x")
+        ax_err_interp.set_ylabel("y - interp(x)")
+        ax_err_interp.legend()
+        ax_err_interp.grid()
+
+        ax_rand_interp.plot(X, Y, '-r', lw="4", label="func")
+        ax_rand_interp.plot(x_rand, y_rand, 'ob', ms="8", label="points")
+        ax_rand_interp.plot(x_rand, y_data_rand, 'ok', ms="5", label="data")
+        ax_rand_interp.plot(X, Y_lg_rand, '--c', lw='2', label="lg_rand")
+        ax_rand_interp.plot(X, Y_lin_rand, '--y', lw='2', label="lin_rand")
+        ax_rand_interp.plot(X, Y_quad_rand, '--b', lw='2', label="quad_rand")
+        ax_rand_interp.plot(X, Y_cub_rand, '--g', lw='2', label="cub_rand")
+        ax_rand_interp.set_title(f'func interp, dx=rand, n={n_fixed}, p={p}, law={law}')
+        ax_rand_interp.set_xlabel("x")
+        ax_rand_interp.set_ylabel("y = sin(x) / ln(x)")
+        ax_rand_interp.legend()
+        ax_rand_interp.grid()
+        ax_rand_interp.set_ylim(ymin=min(Y) - h, ymax=max(Y) + h)
+
+        ax_rand_err_interp.axhline(0, c='r', label="func")
+        ax_rand_err_interp.plot(X, lg_rand_err, 'c', lw='2', label="lg")
+        ax_rand_err_interp.plot(X, lin_err_rand, 'y', lw='2', label="lin")
+        ax_rand_err_interp.plot(X, quad_err_rand, 'b', lw='2', label="quad")
+        ax_rand_err_interp.plot(X, cub_err_rand, 'g', lw='2', label="cub")
+        ax_rand_err_interp.set_title(f'interp err, dx=rand, n={n_fixed}, p={p}, law={law}')
+        ax_rand_err_interp.set_xlabel("x")
+        ax_rand_err_interp.set_ylabel("y - interp(x)")
+        ax_rand_err_interp.legend()
+        ax_rand_err_interp.grid()
+        ax_rand_err_interp.set_ylim(ymin=min(Y) - h, ymax=max(Y) + h)
 
         plt.show()
 
