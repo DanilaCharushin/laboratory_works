@@ -87,6 +87,9 @@ def main():
     Y = f(X)
 
     for n_fixed in n:
+        # =========================================================================
+        # =================================PART 1==================================
+        # =========================================================================
         x = np.linspace(a, b, n_fixed)
         y = f(x)
 
@@ -110,6 +113,32 @@ def main():
         err_rand_smooth3 = y - y_rand_smooth3
         err_rand_smooth5 = y - y_rand_smooth5
         err_rand_smooth7 = y - y_rand_smooth7
+
+        err_norm = np.array([
+            np.linalg.norm(err_noise),
+            np.linalg.norm(err_smooth3),
+            np.linalg.norm(err_smooth5),
+            np.linalg.norm(err_smooth7),
+            np.linalg.norm(err_rand_noise),
+            np.linalg.norm(err_rand_smooth3),
+            np.linalg.norm(err_rand_smooth5),
+            np.linalg.norm(err_rand_smooth7)],
+            dtype=np.float64
+        )
+        print("======================================")
+        print("==============ERROR NORM==============")
+        print(f'n={n_fixed}, p={p}, law={law}')
+        print("--------------------------------------")
+        print(f'       err_noise: {round(err_norm[0], 5)}')
+        print(f'     err_smooth3: {round(err_norm[1], 5)}')
+        print(f'     err_smooth5: {round(err_norm[2], 5)}')
+        print(f'     err_smooth7: {round(err_norm[3], 5)}')
+        print(f'  err_rand_noise: {round(err_norm[4], 5)}')
+        print(f'err_rand_smooth3: {round(err_norm[5], 5)}')
+        print(f'err_rand_smooth5: {round(err_norm[6], 5)}')
+        print(f'err_rand_smooth7: {round(err_norm[7], 5)}')
+        print("--------------------------------------")
+        print(f'min: {round(min(err_norm), 5)}')
 
         fig, ax = plt.subplots()
         fig_err, ax_err = plt.subplots()
@@ -170,6 +199,13 @@ def main():
         ax_rand_err.set_ylabel("y - y'")
         ax_rand_err.legend()
         ax_rand_err.grid()
+
+        # =========================================================================
+        # =================================PART 2==================================
+        # =========================================================================
+
+
+
 
         plt.show()
 
