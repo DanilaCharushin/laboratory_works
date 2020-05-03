@@ -79,7 +79,7 @@ class GridData(object):
 
 
 def main():
-    n = [7, 15, 30]
+    n = [10]
 
     X = np.linspace(a, b, 1000)
     Y = f(X)
@@ -91,8 +91,14 @@ def main():
         x = np.linspace(a, b, n_fixed)
         y = f(x)
 
-        x_rand = np.sort(np.random.uniform(a, b, n_fixed))
+        tmp = []
+        tmp.append(a)
+        for i in range(1, n_fixed - 1):
+            tmp.append(GridData.noise(x[i], 5, law=law))
+        tmp.append(b)
+        x_rand = np.sort(tmp)
         y_rand = f(x_rand)
+
         y_noisy = GridData.noise(y, p, law=law)
         y_rand_noisy = GridData.noise(y_rand, p, law=law)
 
@@ -147,6 +153,11 @@ def main():
         print(f'     min: {data["type"]} ({round(data["norm"], 5)})')
         print(f'min_rand: {data_rand["type"]} ({round(data_rand["norm"], 5)})')
 
+        # ===============================
+        y_data = data["value"]
+        y_data_rand = data_rand["value"]
+        # ===============================
+
         fig, ax = plt.subplots()
         fig_err, ax_err = plt.subplots()
         fig_rand, ax_rand = plt.subplots()
@@ -197,10 +208,10 @@ def main():
         ax_rand.grid()
 
         ax_rand_err.axhline(0, c='r', label="func")
-        ax_rand_err.plot(x, err_rand_noise, 'c', lw='2', label="noise")
-        ax_rand_err.plot(x, err_rand_smooth3, 'y', lw='2', label="smooth3")
-        ax_rand_err.plot(x, err_rand_smooth5, 'g', lw='2', label="smooth5")
-        ax_rand_err.plot(x, err_rand_smooth7, 'k', lw='2', label="smooth7")
+        ax_rand_err.plot(x_rand, err_rand_noise, 'c', lw='2', label="noise")
+        ax_rand_err.plot(x_rand, err_rand_smooth3, 'y', lw='2', label="smooth3")
+        ax_rand_err.plot(x_rand, err_rand_smooth5, 'g', lw='2', label="smooth5")
+        ax_rand_err.plot(x_rand, err_rand_smooth7, 'k', lw='2', label="smooth7")
         ax_rand_err.set_title(f'func err, dx=rand, n={n_fixed}, p={p}, law={law}')
         ax_rand_err.set_xlabel("x")
         ax_rand_err.set_ylabel("y - y'")
@@ -210,33 +221,31 @@ def main():
         # =========================================================================
         # =================================PART 2==================================
         # =========================================================================
-        y_data = data["value"]
-        y_data_rand = data_rand["value"]
         lg = interp.lagrange(x, y_data)
-        lg_rand = interp.lagrange(x_rand, y_data_rand)
         lin = interp.interp1d(x, y_data, kind="linear")
-        lin_rand = interp.interp1d(x, y_data_rand, kind="linear")
         quad = interp.interp1d(x, y_data, kind="quadratic")
-        quad_rand = interp.interp1d(x, y_data_rand, kind="quadratic")
         cub = interp.interp1d(x, y_data, kind="cubic")
-        cub_rand = interp.interp1d(x, y_data_rand, kind="cubic")
+        lg_rand = interp.lagrange(x_rand, y_data_rand)
+        lin_rand = interp.interp1d(x_rand, y_data_rand, kind="linear", )
+        quad_rand = interp.interp1d(x_rand, y_data_rand, kind="quadratic")
+        cub_rand = interp.interp1d(x_rand, y_data_rand, kind="cubic")
 
         Y_lg = lg(X)
-        Y_lg_rand = lg_rand(X)
         Y_lin = lin(X)
-        Y_lin_rand = lin_rand(X)
         Y_quad = quad(X)
-        Y_quad_rand = quad_rand(X)
         Y_cub = cub(X)
+        Y_lg_rand = lg_rand(X)
+        Y_lin_rand = lin_rand(X)
+        Y_quad_rand = quad_rand(X)
         Y_cub_rand = cub_rand(X)
 
         lg_err = Y - Y_lg
-        lg_rand_err = Y - Y_lg_rand
         lin_err = Y - Y_lin
-        lin_err_rand = Y - Y_lg_rand
         quad_err = Y - Y_quad
-        quad_err_rand = Y - Y_quad_rand
         cub_err = Y - Y_cub
+        lg_err_rand = Y - Y_lg_rand
+        lin_err_rand = Y - Y_lg_rand
+        quad_err_rand = Y - Y_quad_rand
         cub_err_rand = Y - Y_cub_rand
 
         print("===========================================")
@@ -247,7 +256,7 @@ def main():
             {"norm": np.linalg.norm(lin_err), "type": "lin"},
             {"norm": np.linalg.norm(quad_err), "type": "quad"},
             {"norm": np.linalg.norm(cub_err), "type": "cub"},
-            {"norm": np.linalg.norm(lg_rand_err), "type": "rand_lg"},
+            {"norm": np.linalg.norm(lg_err_rand), "type": "rand_lg"},
             {"norm": np.linalg.norm(lin_err_rand), "type": "rand_lin"},
             {"norm": np.linalg.norm(quad_err_rand), "type": "rand_quad"},
             {"norm": np.linalg.norm(cub_err_rand), "type": "rand_cub"}
@@ -258,7 +267,7 @@ def main():
         print(f'      lin_err: {round(err_norm[1]["norm"], 5)}')
         print(f'     quad_err: {round(err_norm[2]["norm"], 5)}')
         print(f'      cub_err: {round(err_norm[3]["norm"], 5)}')
-        print(f'  lg_rand_err: {round(err_norm[4]["norm"], 5)}')
+        print(f'  lg_err_rand: {round(err_norm[4]["norm"], 5)}')
         print(f' lin_err_rand: {round(err_norm[5]["norm"], 5)}')
         print(f'quad_err_rand: {round(err_norm[6]["norm"], 5)}')
         print(f' cub_err_rand: {round(err_norm[7]["norm"], 5)}')
@@ -321,7 +330,7 @@ def main():
         ax_rand_interp.set_ylim(ymin=min(Y) - h, ymax=max(Y) + h)
 
         ax_rand_err_interp.axhline(0, c='r', label="func")
-        ax_rand_err_interp.plot(X, lg_rand_err, 'c', lw='2', label="lg")
+        ax_rand_err_interp.plot(X, lg_err_rand, 'c', lw='2', label="lg")
         ax_rand_err_interp.plot(X, lin_err_rand, 'y', lw='2', label="lin")
         ax_rand_err_interp.plot(X, quad_err_rand, 'b', lw='2', label="quad")
         ax_rand_err_interp.plot(X, cub_err_rand, 'g', lw='2', label="cub")
@@ -331,6 +340,113 @@ def main():
         ax_rand_err_interp.legend()
         ax_rand_err_interp.grid()
         ax_rand_err_interp.set_ylim(ymin=min(Y) - h, ymax=max(Y) + h)
+
+        print("===========================================")
+        print("============APPROXIMATION ERROR============")
+
+        p2 = np.poly1d(np.polyfit(x, y_data, 2))
+        p3 = np.poly1d(np.polyfit(x, y_data, 3))
+        p4 = np.poly1d(np.polyfit(x, y_data, 4))
+        p5 = np.poly1d(np.polyfit(x, y_data, 5))
+        p10 = np.poly1d(np.polyfit(x, y_data, 10))
+        p2_rand = np.poly1d(np.polyfit(x_rand, y_data_rand, 2))
+        p3_rand = np.poly1d(np.polyfit(x_rand, y_data_rand, 3))
+        p4_rand = np.poly1d(np.polyfit(x_rand, y_data_rand, 4))
+        p5_rand = np.poly1d(np.polyfit(x_rand, y_data_rand, 5))
+        p10_rand = np.poly1d(np.polyfit(x_rand, y_data_rand, 10))
+        A = np.vstack([x, np.ones(len(x))]).T
+        m, c = np.linalg.lstsq(A, y_data, rcond=None)[0]
+        A_rand = np.vstack([x_rand, np.ones(len(x_rand))]).T
+        m_rand, c_rand = np.linalg.lstsq(A_rand, y_data_rand, rcond=None)[0]
+
+        Y_p2 = p2(X)
+        Y_p3 = p3(X)
+        Y_p4 = p4(X)
+        Y_p5 = p5(X)
+        Y_p10 = p10(X)
+        Y_lstsq = m*x + c
+        Y_p2_rand = p2_rand(X)
+        Y_p3_rand = p3_rand(X)
+        Y_p4_rand = p4_rand(X)
+        Y_p5_rand = p5_rand(X)
+        Y_p10_rand = p10_rand(X)
+        Y_lstsq_rand = m_rand*x_rand + c_rand
+
+        p2_err = Y - Y_p2
+        p3_err = Y - Y_p3
+        p4_err = Y - Y_p4
+        p5_err = Y - Y_p5
+        p10_err = Y - Y_p10
+        lstsq_err = y - Y_lstsq
+        p2_err_rand = Y - Y_p2_rand
+        p3_err_rand = Y - Y_p3_rand
+        p4_err_rand = Y - Y_p4_rand
+        p5_err_rand = Y - Y_p5_rand
+        p10_err_rand = Y - Y_p10_rand
+        lstsq_err_rand = y - Y_lstsq_rand
+
+        fig_approx, ax_approx = plt.subplots()
+        fig_err_approx, ax_err_approx = plt.subplots()
+        fig_rand_approx, ax_rand_approx = plt.subplots()
+        fig_rand_err_approx, ax_rand_err_approx = plt.subplots()
+
+        ax_approx.plot(X, Y, '-r', lw="4", label="func")
+        ax_approx.plot(x, y, 'ob', ms="8", label="points")
+        ax_approx.plot(x, y_data, 'ok', ms="5", label="data")
+        ax_approx.plot(X, Y_p2, '--b', lw='2', label="p2")
+        ax_approx.plot(X, Y_p3, '--g', lw='2', label="p3")
+        ax_approx.plot(X, Y_p4, '--k', lw='2', label="p4")
+        ax_approx.plot(X, Y_p5, '--c', lw='2', label="p5")
+        ax_approx.plot(X, Y_p10, '--m', lw='2', label="p10")
+        ax_approx.plot(x, Y_lstsq, '--', c='#ff7f0e', lw='2', label="lstsq")
+        ax_approx.set_title(f'func approx, dx=const, n={n_fixed}, p={p}, law={law}')
+        ax_approx.set_xlabel("x")
+        ax_approx.set_ylabel("y = sin(x) / ln(x)")
+        ax_approx.legend()
+        ax_approx.grid()
+
+        ax_err_approx.axhline(0, c='r', label="func")
+        ax_err_approx.plot(X, p2_err, 'b', lw='2', label="p2")
+        ax_err_approx.plot(X, p3_err, 'g', lw='2', label="p3")
+        ax_err_approx.plot(X, p4_err, 'k', lw='2', label="p4")
+        ax_err_approx.plot(X, p5_err, 'c', lw='2', label="p5")
+        ax_err_approx.plot(X, p10_err, 'm', lw='2', label="p10")
+        ax_err_approx.plot(x, lstsq_err, c='#ff7f0e', lw='2', label="lstsq")
+        ax_err_approx.set_title(f'approx err, dx=const, n={n_fixed}, p={p}, law={law}')
+        ax_err_approx.set_xlabel("x")
+        ax_err_approx.set_ylabel("y - approx(x)")
+        ax_err_approx.legend()
+        ax_err_approx.grid()
+
+        ax_rand_approx.plot(X, Y, '-r', lw="4", label="func")
+        ax_rand_approx.plot(x_rand, y_rand, 'ob', ms="8", label="points")
+        ax_rand_approx.plot(x_rand, y_data_rand, 'ok', ms="5", label="data")
+        ax_rand_approx.plot(X, Y_p2_rand, '--b', lw='2', label="p2")
+        ax_rand_approx.plot(X, Y_p3_rand, '--g', lw='2', label="p3")
+        ax_rand_approx.plot(X, Y_p4_rand, '--k', lw='2', label="p4")
+        ax_rand_approx.plot(X, Y_p5_rand, '--c', lw='2', label="p5")
+        ax_rand_approx.plot(X, Y_p10_rand, '--m', lw='2', label="p10")
+        ax_rand_approx.plot(x, Y_lstsq_rand, '--', c='#ff7f0e', lw='2', label="lstsq")
+        ax_rand_approx.set_title(f'func approx, dx=rand, n={n_fixed}, p={p}, law={law}')
+        ax_rand_approx.set_xlabel("x")
+        ax_rand_approx.set_ylabel("y = sin(x) / ln(x)")
+        ax_rand_approx.legend()
+        ax_rand_approx.grid()
+        ax_rand_approx.set_ylim(ymin=min(Y) - h, ymax=max(Y) + h)
+
+        ax_rand_err_approx.axhline(0, c='r', label="func")
+        ax_rand_err_approx.plot(X, p2_err_rand, 'b', lw='2', label="p2")
+        ax_rand_err_approx.plot(X, p3_err_rand, 'g', lw='2', label="p3")
+        ax_rand_err_approx.plot(X, p4_err_rand, 'k', lw='2', label="p4")
+        ax_rand_err_approx.plot(X, p5_err_rand, 'c', lw='2', label="p5")
+        ax_rand_err_approx.plot(X, p10_err_rand, 'm', lw='2', label="p10")
+        ax_rand_err_approx.plot(x, lstsq_err_rand, c='#ff7f0e', lw='2', label="lstsq")
+        ax_rand_err_approx.set_title(f'approx err, dx=rand, n={n_fixed}, p={p}, law={law}')
+        ax_rand_err_approx.set_xlabel("x")
+        ax_rand_err_approx.set_ylabel("y - approx(x)")
+        ax_rand_err_approx.legend()
+        ax_rand_err_approx.grid()
+        ax_rand_err_approx.set_ylim(ymin=min(Y) - h, ymax=max(Y) + h)
 
         plt.show()
 
